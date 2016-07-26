@@ -419,7 +419,7 @@ sub SMA_logon($$)
 		1;																	
 	} or Log3 $globname, 1, "$globname query timed out";
 	
-	# Nothing received -> exit loop
+	# Nothing received -> exit
 	if (not defined $size)															
 	{
 		Log3 $globname, 1, "$globname: Nothing received...";
@@ -434,9 +434,9 @@ sub SMA_logon($$)
 		if ($size > 62)
 		{
 			# Check all parameters of answer
-			my $r_susyid = unpack("V*", substr $data, 20, 2);
+			my $r_susyid = unpack("v*", substr $data, 20, 2);
 			my $r_serial = unpack("V*", substr $data, 22, 4);
-			my $r_pkt_ID = unpack("V*", substr $data, 40, 2);
+			my $r_pkt_ID = unpack("v*", substr $data, 40, 2);
 			my $r_cmd_ID = unpack("V*", substr $data, 42, 4);
 			my $r_error  = unpack("V*", substr $data, 36, 4);
 			if (($r_susyid ne $mysusyid) || ($r_serial ne $myserialnumber) || ($r_pkt_ID ne $pkt_ID) || ($r_cmd_ID ne 0xFFFD040D) || ($r_error ne 0))
@@ -506,6 +506,7 @@ sub SMA_logout($)
 		return $r_FAIL;
 	};
 	
+	Log3 $globname, 3, "$globname: Logged out now.";
 	$socket->close();	
 	return $r_OK;	
 }
