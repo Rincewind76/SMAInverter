@@ -129,8 +129,8 @@ sub SMAInverter_Initialize($)
 						"enable-modulstate:0,1 " .
 						"interval " . 
 						"detail-level:0,1,2 " .
-						"target-susyid" .
-						"target-serial" .
+						"target-susyid " .
+						"target-serial " .
 						$readingFnAttributes;
 	$hash->{AttrFn}   = "SMAInverter_Attr";
 	
