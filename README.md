@@ -22,10 +22,10 @@ This is an FHEM-Module for SMA Inverters. <br>
 Tested on Sunny Tripower 6000TL-20 and Sunny Island 4.4
 
 Install in FHEM:<br>
-reload 76_SMAInverter.pm<br>
-define (name) SMAInverter (passcode) (IP of inverter)<br>
+Copy module 76_SMAInverter.pm in FHEM directory (e.g. /opt/fhem/FHEM )<br>
+type in FHEM command: reload 76_SMAInverter.pm<br>
+type in FHEM command: define (name) SMAInverter (passcode) (IP of inverter)<br>
 example:<br>
-reload 76_SMAInverter.pm<br>
 define MySTP SMAInverter 0000 192.168.178.101<br>
 
 
