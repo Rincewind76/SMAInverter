@@ -11,7 +11,7 @@
 #    - based on an Idea by SpenZerX and HDO
 #    - Waldmensch for various improvements
 #    - sbfspot (https://sbfspot.codeplex.com/)
-#  - written by Thomas Schoedl (sct14675) with inputs from Volker, waldmensch and DS_starter
+#  - rewritten by Thomas Schoedl (sct14675) with inputs from Volker, waldmensch and DS_starter
 # 
 #  Description:
 #  This is an FHEM-Module for SMA Inverters.
