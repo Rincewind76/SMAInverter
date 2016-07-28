@@ -35,19 +35,9 @@ use DateTime;
 # Global vars
 my $globname = "SMAInverter";
 
-# Sleep Mode variables
-my $default_starthour = "05:00";
-my $starthour = 5;
-my $startminute = 0;
-my $default_endhour = "22:00";
-my $endhour = 22;
-my $endminute = 0;
-my $suppress_night_mode = 0;
 # Reporting (=Reading) detail level: 
 # 0 - Standard (only power and energy), 1 - More details(including current and voltage), 2 - All Data
 my $detail_level = 0;
-# General enabling of the module
-my $modulstate_enabled = 0;
 # protocol related
 my $mysusyid = 233;								# random number, has to be different from any device in local network
 my $myserialnumber = 123321123;		# random number, has to be different from any device in local network
@@ -123,68 +113,16 @@ sub SMAInverter_Initialize($)
 
 	$hash->{DefFn}     = "SMAInverter_Define";
 	$hash->{UndefFn}   = "SMAInverter_Undef";
-	$hash->{AttrList}  = "suppress-night-mode:0,1 " .
-						"starttime " .
-						"endtime " .
-						"enable-modulstate:0,1 " .
-						"interval " . 
+	$hash->{AttrList}  = "interval " . 
 						"detail-level:0,1,2 " .
 						"target-susyid " .
 						"target-serial " .
 						$readingFnAttributes;
 	$hash->{AttrFn}   = "SMAInverter_Attr";
 	
-	if ($attr{$name}{"starttime"})
-	{
-		($hval, $mval) = split(/:/,$attr{$name}{"starttime"});
-	}
-	else
-	{
-		($hval, $mval) = split(/:/,$default_starthour);
-	}
-	$starthour = int($hval);
-	$startminute = int($mval);
-	
-	if ($attr{$name}{"endtime"})
-	{
-		($hval, $mval) = split(/:/,$attr{$name}{"endtime"});
-	}
-	else
-	{
-		($hval, $mval) = split(/:/,$default_endhour);
-	}
-	$endhour = int($hval);
-	$endminute = int($mval);
-
-	$suppress_night_mode = ($attr{$name}{"suppress-night-mode"}) ? $attr{$name}{"suppress-night-mode"} : 0;
-	$modulstate_enabled = ($attr{$name}{"enable-modulstate"}) ? $attr{$name}{"enable-modulstate"} : 0;
 	$detail_level = ($attr{$name}{"detail-level"}) ? $attr{$name}{"detail-level"} : 0;
 	$target_susyid = ($attr{$name}{"target-susyid"}) ? $attr{$name}{"target-susyid"} : $default_target_susyid;
 	$target_serial = ($attr{$name}{"target-serial"}) ? $attr{$name}{"target-serial"} : $default_target_serial;
-	
-	Log3 $name, 0, "$name: Started with sleepmode from $endhour:$endminute - $starthour:$startminute";
-}
-
-###################################
-sub is_Sleepmode()
-{
-	# Build 3 DateTime Objects to make the comparison more robust
-	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
-	my $dt_startdate = DateTime->new(year=>$year+1900,month=>$mon+1,day=>$mday,hour=>$starthour,minute=>$startminute,second=>0,time_zone=>'local');
-	my $dt_enddate = DateTime->new(year=>$year+1900,month=>$mon+1,day=>$mday,hour=>$endhour,minute=>$endminute,second=>0,time_zone=>'local');
-	my $dt_now = DateTime->now(time_zone=>'local');
-
-	# Return of any value != 0 means "sleeping"
-	if ($dt_now >= $dt_enddate || $dt_now <= $dt_startdate)
-	{
-		# we have reached normal sleepmode now
-		return $r_SLEEP;
-	}
-	else
-	{
-		# no sleepmode
-		return $r_OK;
-	}
 }
 
 ###################################
@@ -256,70 +194,6 @@ sub SMAInverter_Attr(@)
 	my $hval;
 	my $mval;
 
-	if (($aName eq "starttime" || $aName eq "endtime") && not ($aVal =~ /^([0-1]?[0-9]|[2][0-3]):([0-5][0-9])$/))
-	{
-		return "value $aVal invalid"; # no correct time format hh:mm
-	}
-	
-	if ($aName eq "enable-modulstate")
-	{
-		$modulstate_enabled  = ($cmd eq "set") ?  int($aVal) : 0;
-		Log3 $name, 3, "$name: Set $aName to $aVal";
-	}
-	
-	if ($aName eq "starttime")
-	{
-		if ($cmd eq "set")
-		{
-			($hval, $mval) = split(/:/,$aVal);
-		}
-		else
-		{
-			($hval, $mval) = split(/:/,$default_starthour);
-		}
-		if (int($hval) < 12)
-		{
-			$starthour = int($hval);
-			$startminute = int($mval);
-		}
-		else
-		{
-			return "$name: Attr starttime must be set smaller than 12:00! Not set to $starthour:$startminute";
-		}
-		
-		Log3 $name, 3, "$name: Attr starttime is set to " . sprintf("%02d:%02d",$starthour,$startminute);
-	}
-	
-	if ($aName eq "endtime")
-	{
-		if ($cmd eq "set")
-		{
-			($hval, $mval) = split(/:/,$aVal);
-		}
-		else
-		{
-			($hval, $mval) = split(/:/,$default_endhour);
-		}
-		
-		if (int($hval) > 12)
-		{
-			$endhour = int($hval);
-			$endminute = int($mval);
-		}
-		else
-		{
-			return "$name: Attr endtime must be set larger than 12:00! Not set to $endhour:$endminute";
-		}
-		
-		Log3 $name, 3, "$name: Attr endtime is set to " . sprintf("%02d:%02d",$endhour,$endminute);
-	}
-	
-	if ($aName eq "suppress-night-mode") 
-	{
-		$suppress_night_mode = ($cmd eq "set") ? $aVal : 0;
-		Log3 $name, 3, "$name: Set $aName to $aVal";
-	}
-
 	if ($aName eq "target-susyid") 
 	{
 		$target_susyid = ($cmd eq "set") ? $aVal : $default_target_susyid;
@@ -364,7 +238,6 @@ sub SMAInverter_GetStatus($)
 	$detail_level = ($attr{$name}{"detail-level"}) ? $attr{$name}{"detail-level"} : 0;
 	$target_susyid = ($attr{$name}{"target-susyid"}) ? $attr{$name}{"target-susyid"} : $default_target_susyid;
 	$target_serial = ($attr{$name}{"target-serial"}) ? $attr{$name}{"target-serial"} : $default_target_serial;
-	$suppress_night_mode = ($attr{$name}{"suppress-night-mode"}) ? $attr{$name}{"suppress-night-mode"} : 0;
 		
 	# Get current time
 	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
@@ -372,8 +245,6 @@ sub SMAInverter_GetStatus($)
 	# For logging events set the module name
 	$globname = $name;
 	
-	if(($suppress_night_mode eq 1) || (is_Sleepmode() eq $r_OK))
-	{
 		if(SMA_logon($hash->{Host}, $hash->{Pass}) eq $r_OK)
 		{
 				Log3 $globname, 5, "$globname: Logged in now";
@@ -545,15 +416,6 @@ sub SMAInverter_GetStatus($)
 				readingsBulkUpdate($hash, "modulstate", "login failed");
 				readingsEndUpdate($hash, 1);	# Notify is done by Dispatch		
 		}
-	} else
-	{
-		# Sleep Mode activated
-				# Login failed/not possible
-				readingsBeginUpdate($hash);
-				readingsBulkUpdate($hash, "state", "sleep");
-				readingsBulkUpdate($hash, "modulstate", "sleepmode active");
-				readingsEndUpdate($hash, 1);	# Notify is done by Dispatch	
-	}
 	
 	InternalTimer(gettimeofday()+$interval, "SMAInverter_GetStatus", $hash, 1);
 }
@@ -1000,6 +862,178 @@ sub ByteOrderLong($)
 <a name="SMAInverter"></a>
 <h3>SMAInverter</h3>
 
-*** To be written...
+Module for the integration of a SMA Inverter over it's Speedwire (=Ethernet) Interface.<br>
+Tested on Sunny Tripower 6000TL-20 and Sunny Island 4.4 with Speedwire/Webconnect Piggyback.
+
+<p>
+
+<b>Requirements:</b> 
+This module requires:
+<ul>
+    <li>Perl Module: IO::Socket::INET</li>
+    <li>Perl Module: Datetime</li>
+</ul>
+Installation e.g. with sudo apt-get install libdatetime-perl libio-socket-multicast-perl
+
+<p>
+
+<b>Define</b>
+<ul>
+<code>define &lt;name&gt; SMAInverter &lt;pin&gt; &lt;hostname/ip&gt; </code><br>
+<br>
+<li>pin: User-Password of the SMA Inverter. Default is 0000. Can be changed by "Sunny Explorer" Windows Software</li>
+<li>hostname/ip: Hostname or IP-Adress of the inverter (or it's speedwire piggyback module).</li>
+<li>Port of the inverter is 9522 by default. Firewall has to allow connection on this port!</li>
+</ul>
+
+<p>
+
+<b>Modus</b>
+<ul>
+The module sends commands to the inverter and checks if they are supported by the inverter.<br>
+In case of a positive answer the data is collected and displayed in the readings according to the detail-level.
+</ul>
+
+<b>Parameter</b>
+<ul>
+	<li>interval: Queryintreval in seconds </li>
+	<li>detail-level: "0" - Only Power and Energy / "1" - Including Voltage and Current / "2" - All values
+	<li>target-susyid: In case of a Multigate the target SUSyID can be defined. Default is 0xFFFF, means any SUSyID</li>
+	<li>target-serial: In case of a Multigate the target Serialnumber can be defined. Default is 0xFFFFFFFF, means any Serialnumber</li>	
+</ul>
+
+<b>Readings</b>
+ <ul>
+<li>BAT_CYCLES :  Battery recharge cycles </li>
+<li>BAT_IDC :  Battery Current </li>
+<li>BAT_TEMP :  Battery temperature </li>
+<li>BAT_UDC :  Battery Voltage </li>
+<li>ChargeStatus :  Battery Charge status </li>
+<li>CLASS :  Inverter Class </li>
+<li>PACMAX1 :  Nominal power in Ok Mode </li>
+<li>PACMAX1_2 :  Maximum active power device (Some inverters like SB3300/SB1200) </li>
+<li>PACMAX2 :  Nominal power in Warning Mode </li>
+<li>PACMAX3 :  Nominal power in Fault Mode </li>
+<li>Serialnumber :  Inverter Serialnumber </li>
+<li>SPOT_ETODAY :  Today yield </li>
+<li>SPOT_ETOTAL :  Total yield </li>
+<li>SPOT_FEEDTM :  Feed-in time </li>
+<li>SPOT_FREQ :  Grid Frequency </li>
+<li>SPOT_IAC1 :  Grid current phase L1 </li>
+<li>SPOT_IAC2 :  Grid current phase L2 </li>
+<li>SPOT_IAC3 :  Grid current phase L3 </li>
+<li>SPOT_IDC1 :  DC current input </li>
+<li>SPOT_IDC2 :  DC current input </li>
+<li>SPOT_OPERTM :  Operation Time </li>
+<li>SPOT_PAC1 :  Power L1  </li>
+<li>SPOT_PAC2 :  Power L2  </li>
+<li>SPOT_PAC3 :  Power L3  </li>
+<li>SPOT_PACTOT :  Total Power </li>
+<li>SPOT_PDC1 :  DC power input 1 </li>
+<li>SPOT_PDC2 :  DC power input 2 </li>
+<li>SPOT_UAC1 :  Grid voltage phase L1 </li>
+<li>SPOT_UAC2 :  Grid voltage phase L2 </li>
+<li>SPOT_UAC3 :  Grid voltage phase L3 </li>
+<li>SPOT_UDC1 :  DC voltage input </li>
+<li>SPOT_UDC2 :  DC voltage input </li>
+<li>SUSyID :  Inverter SUSyID </li>
+<li>INV_TEMP :  Inverter temperature </li>
+<li>INV_TYPE :  Inverter Type </li>
+<li>POWER_IN :  Battery Charging power </li>
+<li>POWER_OUT :  Battery Discharging power </li>
+
+ </ul>
+
+
+=end html
+
+
+=begin html_DE
+
+<a name="SMAInverter"></a>
+<h3>SMAInverter</h3>
+
+Modul zur Einbindung eines SMA Wechselrichters über Speedwire (Ethernet).<br>
+Getestet mit Sunny Tripower 6000TL-20 und Sunny Island 4.4 mit Speedwire/Webconnect Piggyback
+
+<p>
+
+<b>Voraussetzungen:</b> 
+Dieses Modul benötigt:
+<ul>
+    <li>Perl Module: IO::Socket::INET</li>
+    <li>Perl Module: Datetime</li>
+</ul>
+Installation z.B. mit sudo apt-get install libdatetime-perl libio-socket-multicast-perl
+
+<p>
+
+<b>Define</b>
+<ul>
+<code>define &lt;name&gt; SMAInverter &lt;pin&gt; &lt;hostname/ip&gt; [port]</code><br>
+<br>
+<li>pin: Benutzer-Passwort des SMA STP Wechselrichters. Default ist 0000. Kann über die Windows-Software "Sunny Explorer" geändert werden </li>
+<li>hostname/ip: Hostname oder IP-Adresse des Wechselrichters (bzw. dessen Speedwire Moduls mit Ethernetanschluss) </li>
+<li>Der Ports des Wechselrichters ist standardmäßig 9522. Dieser Port muss in der Firewall freigeschalten sein!</li>
+</ul>
+
+<p>
+
+<b>Modus</b>
+<ul>
+Das Modul schickt Befehle an den Wechselrichter und überprüft, ob diese unterstützt werden.<br>
+Bei einer positiven Antwort werden die Daten gesammelt und je nach Detail-Level in den Readings dargestellt.<br>
+</ul>
+
+<b>Parameter</b>
+<ul>
+	<li>interval: Abfrageinterval in Sekunden </li>
+	<li>detail-level: "0" - Nur Leistung und Energie / "1" - zusätzlich Strom und Spannung / "2" - Alle Werte
+	<li>target-susyid: Im Falle eines Multigate kann die Ziel-SUSyID definiert werden. Default ist 0xFFFF (=keine Einschränkunng)</li>
+	<li>target-serial: Im Falle eines Multigate kann die Ziel-Seriennummer definiert werden. Default ist 0xFFFFFFFF (=keine Einschränkunng)</li>	
+</ul>
+
+<b>Readings</b>
+ <ul>
+<li>BAT_CYCLES :  Akku Ladezyklen </li>
+<li>BAT_IDC :  Akku Strom </li>
+<li>BAT_TEMP :  Akku Temperatur </li>
+<li>BAT_UDC :  Akku Spannung </li>
+<li>ChargeStatus :  Akku Ladestand </li>
+<li>CLASS :  Wechselrichter Klasse </li>
+<li>PACMAX1 :  Nominelle Leistung in Ok Mode </li>
+<li>PACMAX1_2 :  Maximale Leistung (für einige Wechselrichtertypen) </li>
+<li>PACMAX2 :  Nominelle Leistung in Warning Mode </li>
+<li>PACMAX3 :  Nominelle Leistung in Fault Mode </li>
+<li>Serialnumber :  Wechselrichter Seriennummer </li>
+<li>SPOT_ETODAY :  Energie heute</li>
+<li>SPOT_ETOTAL :  Energie Insgesamt </li>
+<li>SPOT_FEEDTM :  Einspeise-Stunden </li>
+<li>SPOT_FREQ :  Netz Frequenz </li>
+<li>SPOT_IAC1 :  Netz Strom phase L1 </li>
+<li>SPOT_IAC2 :  Netz Strom phase L2 </li>
+<li>SPOT_IAC3 :  Netz Strom phase L3 </li>
+<li>SPOT_IDC1 :  DC Strom Eingang 1 </li>
+<li>SPOT_IDC2 :  DC Strom Eingang 2 </li>
+<li>SPOT_OPERTM :  Betriebsstunden </li>
+<li>SPOT_PAC1 :  Leistung L1  </li>
+<li>SPOT_PAC2 :  Leistung L2  </li>
+<li>SPOT_PAC3 :  Leistung L3  </li>
+<li>SPOT_PACTOT :  Gesamtleistung </li>
+<li>SPOT_PDC1 :  DC Leistung Eingang 1 </li>
+<li>SPOT_PDC2 :  DC Leistung Eingang 2 </li>
+<li>SPOT_UAC1 :  Netz Spannung phase L1 </li>
+<li>SPOT_UAC2 :  Netz Spannung phase L2 </li>
+<li>SPOT_UAC3 :  Netz Spannung phase L3 </li>
+<li>SPOT_UDC1 :  DC Spannung Eingang 1 </li>
+<li>SPOT_UDC2 :  DC Spannung Eingang 2 </li>
+<li>SUSyID :  Wechselrichter SUSyID </li>
+<li>INV_TEMP :  Wechselrichter Temperatur </li>
+<li>INV_TYPE :  Wechselrichter Typ </li>
+<li>POWER_IN :  Akku Ladeleistung </li>
+<li>POWER_OUT :  Akku Entladeleistung </li>
+ </ul>
+
 
 =end html_DE
+
