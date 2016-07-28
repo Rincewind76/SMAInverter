@@ -1,5 +1,9 @@
 # 76_SMAInverter.pm
-FHEM Support for SMA Inverters
+FHEM Support for SMA Inverters<br>
+<b>Description:</b><br>
+Module for the integration of a SMA Inverter over it's Speedwire (=Ethernet) Interface in FHEM.<br>
+Tested on Sunny Tripower 6000TL-20 and Sunny Island 4.4 with Speedwire/Webconnect Piggyback.
+
 
 Copyright notice<br>
 Published according Creative Commons : Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)<br>
@@ -17,9 +21,6 @@ Credits:
 
 Rewritten by Thomas Schödl (sct14675) with inputs from Volker, Waldmensch and DS_starter
 
-Description:<br>
-Module for the integration of a SMA Inverter over it's Speedwire (=Ethernet) Interface in FHEM.<br>
-Tested on Sunny Tripower 6000TL-20 and Sunny Island 4.4 with Speedwire/Webconnect Piggyback.
 
 <p>
 
@@ -32,7 +33,7 @@ This module requires:
 Installation e.g. with sudo apt-get install libdatetime-perl libio-socket-multicast-perl
 
 <p>
-<b>Define</b><br>
+<b>Installation</b><br>
 The module 76_SMAInverter.pm has to be copied to the /FHEM directory of the installation of FHEM.<br>
 example: /opt/fhem/FHEM<br>
 The module itself has to be loaded in FHEM with the command:<br>
