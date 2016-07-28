@@ -1025,7 +1025,7 @@ Getestet mit Sunny Tripower 6000TL-20 und Sunny Island 4.4 mit Speedwire/Webconn
 <p>
 
 <b>Voraussetzungen:</b> 
-Dieses Modul benötigt:
+Dieses Modul ben&ouml;tigt:
 <ul>
     <li>Perl Module: IO::Socket::INET</li>
     <li>Perl Module: Datetime</li>
@@ -1036,27 +1036,27 @@ Installation z.B. mit sudo apt-get install libdatetime-perl libio-socket-multica
 
 <b>Define</b>
 <ul>
-<code>define &lt;name&gt; SMAInverter &lt;pin&gt; &lt;hostname/ip&gt; [port]</code><br>
+<code>define &lt;name&gt; SMAInverter &lt;pin&gt; &lt;hostname/ip&gt;</code><br>
 <br>
-<li>pin: Benutzer-Passwort des SMA STP Wechselrichters. Default ist 0000. Kann über die Windows-Software "Sunny Explorer" geändert werden </li>
+<li>pin: Benutzer-Passwort des SMA STP Wechselrichters. Default ist 0000. Kann über die Windows-Software "Sunny Explorer" ge&auml;ndert werden </li>
 <li>hostname/ip: Hostname oder IP-Adresse des Wechselrichters (bzw. dessen Speedwire Moduls mit Ethernetanschluss) </li>
-<li>Der Ports des Wechselrichters ist standardmäßig 9522. Dieser Port muss in der Firewall freigeschalten sein!</li>
+<li>Der Port des Wechselrichters ist 9522. Dieser Port muss in der Firewall freigeschalten sein!</li>
 </ul>
 
 <p>
 
 <b>Modus</b>
 <ul>
-Das Modul schickt Befehle an den Wechselrichter und überprüft, ob diese unterstützt werden.<br>
+Das Modul schickt Befehle an den Wechselrichter und &uuml;berpr&uuml;ft, ob diese unterst&uuml;tzt werden.<br>
 Bei einer positiven Antwort werden die Daten gesammelt und je nach Detail-Level in den Readings dargestellt.<br>
 </ul>
 
 <b>Parameter</b>
 <ul>
 	<li>interval: Abfrageinterval in Sekunden </li>
-	<li>detail-level: "0" - Nur Leistung und Energie / "1" - zusätzlich Strom und Spannung / "2" - Alle Werte
-	<li>target-susyid: Im Falle eines Multigate kann die Ziel-SUSyID definiert werden. Default ist 0xFFFF (=keine Einschränkunng)</li>
-	<li>target-serial: Im Falle eines Multigate kann die Ziel-Seriennummer definiert werden. Default ist 0xFFFFFFFF (=keine Einschränkunng)</li>	
+	<li>detail-level: "0" - Nur Leistung und Energie / "1" - zus&auml;tzlich Strom und Spannung / "2" - Alle Werte
+	<li>target-susyid: Im Falle eines Multigate kann die Ziel-SUSyID definiert werden. Default ist 0xFFFF (=keine Einschr&auml;nkunng)</li>
+	<li>target-serial: Im Falle eines Multigate kann die Ziel-Seriennummer definiert werden. Default ist 0xFFFFFFFF (=keine Einschr&auml;nkunng)</li>	
 </ul>
 
 <b>Readings</b>
@@ -1106,3 +1106,4 @@ Bei einer positiven Antwort werden die Daten gesammelt und je nach Detail-Level 
 
 =end html_DE
 
+=cut
