@@ -843,7 +843,8 @@ sub SMA_command($$$$)
 	# All seems ok, data received
 	$inv_susyid = unpack("v*", substr $data, 28, 2);
 	$inv_serial = unpack("V*", substr $data, 30, 4);
-	
+	$socket->close();	
+		
 	my $cmd_identified = $r_FAIL;
 	
 	# Check the data identifier
@@ -853,22 +854,25 @@ sub SMA_command($$$$)
 		$inv_SPOT_ETOTAL = unpack("V*", substr($data, 62, 4));
 		$inv_SPOT_ETODAY = unpack("V*", substr $data, 78, 4);
 		Log3 $globname, 5, "$globname: Found Data SPOT_ETOTAL=$inv_SPOT_ETOTAL and SPOT_ETODAY=$inv_SPOT_ETODAY";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 			
 	if($data_ID eq 0x251E) {
 		$inv_SPOT_PDC1 = unpack("V*", substr $data, 62, 4);
 		$inv_SPOT_PDC2 = unpack("V*", substr $data, 90, 4);
 		Log3 $globname, 5, "$globname: Found Data SPOT_PDC1=$inv_SPOT_PDC1 and SPOT_PDC2=$inv_SPOT_PDC2";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	} 
 		
 	if($data_ID eq 0x4640) {
 		$inv_SPOT_PAC1 = unpack("l*", substr $data, 62, 4);
+		if($inv_SPOT_PAC1 eq 0x80000000) {$inv_SPOT_PAC1 = 0; }	# Catch 0x80000000 as 0 value
 		$inv_SPOT_PAC2 = unpack("l*", substr $data, 90, 4);
+		if($inv_SPOT_PAC2 eq 0x80000000) {$inv_SPOT_PAC2 = 0; }	# Catch 0x80000000 as 0 value
 		$inv_SPOT_PAC3 = unpack("l*", substr $data, 118, 4);
+		if($inv_SPOT_PAC3 eq 0x80000000) {$inv_SPOT_PAC3 = 0; }	# Catch 0x80000000 as 0 value
 		Log3 $globname, 5, "$globname: Found Data SPOT_PAC1=$inv_SPOT_PAC1 and SPOT_PAC2=$inv_SPOT_PAC2 and SPOT_PAC3=$inv_SPOT_PAC3";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 		
 	if($data_ID eq 0x411E) {
@@ -876,83 +880,95 @@ sub SMA_command($$$$)
 		$inv_PACMAX2 = unpack("V*", substr $data, 90, 4);
 		$inv_PACMAX3 = unpack("V*", substr $data, 118, 4);
 		Log3 $globname, 5, "$globname: Found Data INV_PACMAX1=$inv_PACMAX1 and INV_PACMAX2=$inv_PACMAX2 and INV_PACMAX3=$inv_PACMAX3";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 		
 	if($data_ID eq 0x832A) {
 		$inv_PACMAX1_2 = unpack("V*", substr $data, 62, 4);
 		Log3 $globname, 5, "$globname: Found Data INV_PACMAX1_2=$inv_PACMAX1_2";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 		
 	if($data_ID eq 0x263F) {
 		$inv_SPOT_PACTOT = unpack("l*", substr $data, 62, 4);
+		if($inv_SPOT_PACTOT eq 0x80000000) {$inv_SPOT_PACTOT = 0; }	# Catch 0x80000000 as 0 value
 		Log3 $globname, 5, "$globname: Found Data SPOT_PACTOT=$inv_SPOT_PACTOT";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 		
 	if($data_ID eq 0x295A) {
 		$inv_ChargeStatus = unpack("V*", substr $data, 62, 4);
 		Log3 $globname, 5, "$globname: Found Data Battery Charge Status=$inv_ChargeStatus";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 
 	if($data_ID eq 0x451F) {
-		if (substr($data, 62, 4) ne 0xFFFFFFFF) { $inv_SPOT_UDC1 = unpack("l*", substr $data, 62, 4) / 100; } else { $inv_SPOT_UDC1 = 0; }
-		if (substr($data, 90, 4) ne 0xFFFFFFFF) { $inv_SPOT_UDC2 = unpack("l*", substr $data, 90, 4) / 100; } else { $inv_SPOT_UDC2 = 0; }
-		if (substr($data, 118, 4) ne 0xFFFFFFFF) { $inv_SPOT_IDC1 = unpack("l*", substr $data, 118, 4) / 1000; } else { $inv_SPOT_IDC1 = 0; }
-		if (substr($data, 146, 4) ne 0xFFFFFFFF) { $inv_SPOT_IDC2 = unpack("l*", substr $data, 146, 4) / 1000; } else { $inv_SPOT_IDC2 = 0; }
+		$inv_SPOT_UDC1 = unpack("l*", substr $data, 62, 4);
+		$inv_SPOT_UDC2 = unpack("l*", substr $data, 90, 4);
+		$inv_SPOT_IDC1 = unpack("l*", substr $data, 118, 4);
+		$inv_SPOT_IDC2 = unpack("l*", substr $data, 146, 4);
+		if(($inv_SPOT_UDC1 eq 0x80000000) || ($inv_SPOT_UDC1 eq 0xFFFFFFFF)) {$inv_SPOT_UDC1 = 0; } else {$inv_SPOT_UDC1 = $inv_SPOT_UDC1 / 100; }	# Catch 0x80000000 and 0xFFFFFFFF as 0 value
+		if(($inv_SPOT_UDC2 eq 0x80000000) || ($inv_SPOT_UDC2 eq 0xFFFFFFFF)) {$inv_SPOT_UDC2 = 0; } else {$inv_SPOT_UDC2 = $inv_SPOT_UDC2 / 100; }	# Catch 0x80000000 and 0xFFFFFFFF as 0 value
+		if(($inv_SPOT_IDC1 eq 0x80000000) || ($inv_SPOT_IDC1 eq 0xFFFFFFFF)) {$inv_SPOT_IDC1 = 0; } else {$inv_SPOT_IDC1 = $inv_SPOT_IDC1 / 1000; }	# Catch 0x80000000 and 0xFFFFFFFF as 0 value
+		if(($inv_SPOT_IDC2 eq 0x80000000) || ($inv_SPOT_IDC2 eq 0xFFFFFFFF)) {$inv_SPOT_IDC2 = 0; } else {$inv_SPOT_IDC2 = $inv_SPOT_IDC2 / 1000; }	# Catch 0x80000000 and 0xFFFFFFFF as 0 value
 		Log3 $globname, 5, "$globname: Found Data SPOT_UDC1=$inv_SPOT_UDC1 and SPOT_UDC2=$inv_SPOT_UDC2 and SPOT_IDC1=$inv_SPOT_IDC1 and SPOT_IDC2=$inv_SPOT_IDC2";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 
 	if($data_ID eq 0x4648) {
-		if (substr($data, 62, 4) ne 0xFFFFFFFF) { $inv_SPOT_UAC1 = unpack("l*", substr $data, 62, 4) / 100; } else { $inv_SPOT_UAC1 = 0; }
-		if (substr($data, 90, 4) ne 0xFFFFFFFF) { $inv_SPOT_UAC2 = unpack("l*", substr $data, 90, 4) / 100; } else { $inv_SPOT_UAC2 = 0; }
-		if (substr($data, 118, 4) ne 0xFFFFFFFF) { $inv_SPOT_UAC3 = unpack("l*", substr $data, 118, 4) / 100; } else { $inv_SPOT_UAC3 = 0; }
-		if (substr($data, 146, 4) ne 0xFFFFFFFF) { $inv_SPOT_IAC1 = unpack("l*", substr $data, 146, 4) / 1000; } else { $inv_SPOT_IAC1 = 0; }
-		if (substr($data, 174, 4) ne 0xFFFFFFFF) { $inv_SPOT_IAC2 = unpack("l*", substr $data, 174, 4) / 1000; } else { $inv_SPOT_IAC2 = 0; }
-		if (substr($data, 202, 4) ne 0xFFFFFFFF) { $inv_SPOT_IAC3 = unpack("l*", substr $data, 202, 4) / 1000; } else { $inv_SPOT_IAC3 = 0; }
+		$inv_SPOT_UAC1 = unpack("l*", substr $data, 62, 4);
+		$inv_SPOT_UAC2 = unpack("l*", substr $data, 90, 4);
+		$inv_SPOT_UAC3 = unpack("l*", substr $data, 118, 4);
+		$inv_SPOT_IAC1 = unpack("l*", substr $data, 146, 4);
+		$inv_SPOT_IAC2 = unpack("l*", substr $data, 174, 4);
+		$inv_SPOT_IAC3 = unpack("l*", substr $data, 202, 4);
+		if(($inv_SPOT_UAC1 eq 0x80000000) || ($inv_SPOT_UAC1 eq 0xFFFFFFFF)) {$inv_SPOT_UAC1 = 0; } else {$inv_SPOT_UAC1 = $inv_SPOT_UAC1 / 100; }	# Catch 0x80000000 and 0xFFFFFFFF as 0 value
+		if(($inv_SPOT_UAC2 eq 0x80000000) || ($inv_SPOT_UAC2 eq 0xFFFFFFFF)) {$inv_SPOT_UAC2 = 0; } else {$inv_SPOT_UAC2 = $inv_SPOT_UAC2 / 100; }	# Catch 0x80000000 and 0xFFFFFFFF as 0 value
+		if(($inv_SPOT_UAC3 eq 0x80000000) || ($inv_SPOT_UAC3 eq 0xFFFFFFFF)) {$inv_SPOT_UAC3 = 0; } else {$inv_SPOT_UAC3 = $inv_SPOT_UAC3 / 100; }	# Catch 0x80000000 and 0xFFFFFFFF as 0 value
+		if(($inv_SPOT_IAC1 eq 0x80000000) || ($inv_SPOT_IAC1 eq 0xFFFFFFFF)) {$inv_SPOT_IAC1 = 0; } else {$inv_SPOT_IAC1 = $inv_SPOT_IAC1 / 1000; }	# Catch 0x80000000 and 0xFFFFFFFF as 0 value
+		if(($inv_SPOT_IAC2 eq 0x80000000) || ($inv_SPOT_IAC2 eq 0xFFFFFFFF)) {$inv_SPOT_IAC2 = 0; } else {$inv_SPOT_IAC2 = $inv_SPOT_IAC2 / 1000; }	# Catch 0x80000000 and 0xFFFFFFFF as 0 value
+		if(($inv_SPOT_IAC3 eq 0x80000000) || ($inv_SPOT_IAC3 eq 0xFFFFFFFF)) {$inv_SPOT_IAC3 = 0; } else {$inv_SPOT_IAC3 = $inv_SPOT_IAC3 / 1000; }	# Catch 0x80000000 and 0xFFFFFFFF as 0 value
 		Log3 $globname, 5, "$globname: Found Data SPOT_UAC1=$inv_SPOT_UAC1 and SPOT_UAC2=$inv_SPOT_UAC2 and SPOT_UAC3=$inv_SPOT_UAC3 and SPOT_IAC1=$inv_SPOT_IAC1 and SPOT_IAC2=$inv_SPOT_IAC2 and SPOT_IAC3=$inv_SPOT_IAC3";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 
 	if($data_ID eq 0x491E) {
 		$inv_BAT_CYCLES = unpack("V*", substr $data, 62, 4);
 		$inv_BAT_TEMP = unpack("V*", substr $data, 90, 4) / 10; 
 		$inv_BAT_UDC = unpack("V*", substr $data, 118, 4) / 100;
-		$inv_BAT_IDC = unpack("l*", substr $data, 146, 4) / 1000; 
+		$inv_BAT_IDC = unpack("l*", substr $data, 146, 4); 
+		if($inv_BAT_IDC eq 0x80000000) {$inv_BAT_IDC = 0; } else { $inv_BAT_IDC = $inv_BAT_IDC / 1000;} 	# Catch 0x80000000 as 0 value
 		Log3 $globname, 5, "$globname: Found Data BAT_CYCLES=$inv_BAT_CYCLES and BAT_TEMP=$inv_BAT_TEMP and BAT_UDC=$inv_BAT_UDC and BAT_IDC=$inv_BAT_IDC";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 
 	if($data_ID eq 0x2377) {
-		$inv_TEMP = unpack("l*", substr $data, 62, 4) / 100;
+		$inv_TEMP = unpack("l*", substr $data, 62, 4);
+		if($inv_TEMP eq 0x80000000) {$inv_TEMP = 0; } else { $inv_TEMP = $inv_TEMP / 100;} 	# Catch 0x80000000 as 0 value
 		Log3 $globname, 5, "$globname: Found Data Inverter Temp=$inv_TEMP";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 
 	if($data_ID eq 0x462E) {
 		$inv_SPOT_OPERTM = int(unpack("V*", substr $data, 62, 4) / 36) / 100;
 		$inv_SPOT_FEEDTM = int(unpack("V*", substr $data, 78, 4) / 36) / 100;
 		Log3 $globname, 5, "$globname: Found Data SPOT_OPERTM=$inv_SPOT_OPERTM and SPOT_FEEDTM=$inv_SPOT_FEEDTM";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 
 	if($data_ID eq 0x4657) {
 		$inv_SPOT_FREQ = unpack("V*", substr $data, 62, 4) / 100;
 		Log3 $globname, 5, "$globname: Found Data SPOT_FREQ=$inv_SPOT_FREQ";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 
 	if($data_ID eq 0x821E) {
 		$inv_CLASS = unpack("V*", substr $data, 102, 4) & 0x00FFFFFF;
 		$inv_TYPE = unpack("V*", substr $data, 142, 4) & 0x00FFFFFF;
 		Log3 $globname, 5, "$globname: Found Data CLASS=$inv_CLASS and TYPE=$inv_TYPE";
-		$cmd_identified = $r_OK;
+		return $r_OK;
 	}
 	
-	$socket->close();	
 	return $cmd_identified;
 }
 
