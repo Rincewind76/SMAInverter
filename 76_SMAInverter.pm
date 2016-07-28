@@ -104,7 +104,8 @@ my $inv_TEMP = 0;										# Inverter temperature
 my $sup_InverterTemperature = $r_FAIL; # InverterTemperature command supported
 my $inv_GRIDRELAY = 0;							# Grid Relay/Contactor Status
 my $sup_GridRelayStatus = $r_FAIL;	# GridRelayStatus command supported
-
+my $inv_STATUS = 0;									# Inverter Status
+my $sup_DeviceStatus = $r_FAIL;			# DeviceStatus command supported
 
 ###################################
 sub SMAInverter_Initialize($)
@@ -303,6 +304,9 @@ sub SMAInverter_GetStatus($)
 
 					# Check GridRelayStatus
 					$sup_GridRelayStatus = SMA_command($hash->{Host}, 0x51800200, 0x00416400, 0x004164FF);
+					
+					# Check DeviceStatus
+					$sup_DeviceStatus = SMA_command($hash->{Host}, 0x51800200, 0x00214800, 0x002148FF);
 				}
 
 				# nothing more to do, just log out
@@ -413,6 +417,10 @@ sub SMAInverter_GetStatus($)
 					
 					if($sup_GridRelayStatus eq $r_OK) {
 						readingsBulkUpdate($hash, "INV_GRIDRELAY", StatusText($inv_GRIDRELAY));
+					}
+
+					if($sup_DeviceStatus eq $r_OK) {
+						readingsBulkUpdate($hash, "INV_STATUS", StatusText($inv_STATUS));
 					}
 				}
 													
@@ -851,8 +859,22 @@ sub SMA_command($$$$)
 			$temp = unpack("V*", substr $data, 62 + $i*4, 4);
 			if(($temp & 0xFF000000) ne 0) { $inv_GRIDRELAY = $temp & 0x00FFFFFF; }
 			$i = $i + 1;
-		} while ((unpack("V*", substr $data, 62 + $i*4, 4) ne 0x00FFFFFE) && ($i < 5));
+		} while ((unpack("V*", substr $data, 62 + $i*4, 4) ne 0x00FFFFFE) && ($i < 5));		# 0x00FFFFFE is the end marker for attributes
 		Log3 $globname, 5, "$globname: Found Data INV_GRIDRELAY=$inv_GRIDRELAY";
+		return $r_OK;
+	}
+
+	if($data_ID eq 0x2148) {
+		$i = 0;
+		$temp = 0;
+		$inv_STATUS = 0x00FFFFFD;		# Code for No Information;
+		do
+		{
+			$temp = unpack("V*", substr $data, 62 + $i*4, 4);
+			if(($temp & 0xFF000000) ne 0) { $inv_STATUS = $temp & 0x00FFFFFF; }
+			$i = $i + 1;
+		} while ((unpack("V*", substr $data, 62 + $i*4, 4) ne 0x00FFFFFE) && ($i < 5)); 	# 0x00FFFFFE is the end marker for attributes
+		Log3 $globname, 5, "$globname: Found Data inv_STATUS=$inv_STATUS";
 		return $r_OK;
 	}
 	
@@ -886,6 +908,11 @@ sub StatusText($)
 	if($code eq 51) { return "Closed"; }
 	if($code eq 311) { return "Open"; }
 	if($code eq 16777213) { return "No Information"; }
+
+	if($code eq 35) { return "Fault"; }
+	if($code eq 303) { return "Off"; }
+	if($code eq 307) { return "Ok"; }
+	if($code eq 455) { return "Warning"; }
 	
 	return sprintf("%d", $code);
 }
@@ -979,6 +1006,7 @@ In case of a positive answer the data is collected and displayed in the readings
 <li>POWER_IN :  Battery Charging power </li>
 <li>POWER_OUT :  Battery Discharging power </li>
 <li>INV_GRIDRELAY : Grid Relay/Contactor Status </li>
+<li>INV_STATUS : Inverter Status </li>
 
  </ul>
 
@@ -1071,6 +1099,8 @@ Bei einer positiven Antwort werden die Daten gesammelt und je nach Detail-Level 
 <li>POWER_IN :  Akku Ladeleistung </li>
 <li>POWER_OUT :  Akku Entladeleistung </li>
 <li>INV_GRIDRELAY : Netz Relais Status </li>
+<li>INV_STATUS : Wechselrichter Status </li>
+
  </ul>
 
 
