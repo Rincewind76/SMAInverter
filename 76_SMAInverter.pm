@@ -102,6 +102,9 @@ my $inv_SPOT_FEEDTM = 0;						# Feed-in time
 my $sup_OperationTime = $r_FAIL;		# OperationTime command supported
 my $inv_TEMP = 0;										# Inverter temperature
 my $sup_InverterTemperature = $r_FAIL; # InverterTemperature command supported
+my $inv_GRIDRELAY = 0;							# Grid Relay/Contactor Status
+my $sup_GridRelayStatus = $r_FAIL;	# GridRelayStatus command supported
+
 
 ###################################
 sub SMAInverter_Initialize($)
@@ -298,6 +301,8 @@ sub SMAInverter_GetStatus($)
 					# Check MaxACPower2
 					$sup_MaxACPower2 = SMA_command($hash->{Host}, 0x51000200, 0x00832A00, 0x00832AFF);
 
+					# Check GridRelayStatus
+					$sup_GridRelayStatus = SMA_command($hash->{Host}, 0x51800200, 0x00416400, 0x004164FF);
 				}
 
 				# nothing more to do, just log out
@@ -404,6 +409,10 @@ sub SMAInverter_GetStatus($)
 					if($sup_OperationTime eq $r_OK) {
 						readingsBulkUpdate($hash, "SPOT_FEEDTM", $inv_SPOT_FEEDTM);
 						readingsBulkUpdate($hash, "SPOT_OPERTM", $inv_SPOT_OPERTM);
+					}
+					
+					if($sup_GridRelayStatus eq $r_OK) {
+						readingsBulkUpdate($hash, "INV_GRIDRELAY", StatusText($inv_GRIDRELAY));
 					}
 				}
 													
@@ -616,6 +625,7 @@ sub SMA_command($$$$)
 	my $spkt_ID = "";
 	my $cmd_ID = "";
 	my ($socket,$data,$size,$data_ID);
+	my ($i, $temp); 			# Variables for loops and calculation
 	
 	use constant MAXBYTES => scalar 300;
 	
@@ -831,6 +841,20 @@ sub SMA_command($$$$)
 		Log3 $globname, 5, "$globname: Found Data CLASS=$inv_CLASS and TYPE=$inv_TYPE";
 		return $r_OK;
 	}
+
+	if($data_ID eq 0x4164) {
+		$i = 0;
+		$temp = 0;
+		$inv_GRIDRELAY = 0x00FFFFFD;		# Code for No Information;
+		do
+		{
+			$temp = unpack("V*", substr $data, 62 + $i*4, 4);
+			if(($temp & 0xFF000000) ne 0) { $inv_GRIDRELAY = $temp & 0x00FFFFFF; }
+			$i = $i + 1;
+		} while ((unpack("V*", substr $data, 62 + $i*4, 4) ne 0x00FFFFFE) && ($i < 5));
+		Log3 $globname, 5, "$globname: Found Data INV_GRIDRELAY=$inv_GRIDRELAY";
+		return $r_OK;
+	}
 	
 	return $cmd_identified;
 }
@@ -853,6 +877,18 @@ sub ByteOrderLong($)
 	return $output;
 }
 
+####################################
+sub StatusText($)
+{
+	# Parameter is the code, return value is the Text or if not known then the code as string
+	my $code = $_[0];
+	
+	if($code eq 51) { return "Closed"; }
+	if($code eq 311) { return "Open"; }
+	if($code eq 16777213) { return "No Information"; }
+	
+	return sprintf("%d", $code);
+}
 
 1;
 
@@ -942,6 +978,7 @@ In case of a positive answer the data is collected and displayed in the readings
 <li>INV_TYPE :  Inverter Type </li>
 <li>POWER_IN :  Battery Charging power </li>
 <li>POWER_OUT :  Battery Discharging power </li>
+<li>INV_GRIDRELAY : Grid Relay/Contactor Status </li>
 
  </ul>
 
@@ -1033,6 +1070,7 @@ Bei einer positiven Antwort werden die Daten gesammelt und je nach Detail-Level 
 <li>INV_TYPE :  Wechselrichter Typ </li>
 <li>POWER_IN :  Akku Ladeleistung </li>
 <li>POWER_OUT :  Akku Entladeleistung </li>
+<li>INV_GRIDRELAY : Netz Relais Status </li>
  </ul>
 
 
