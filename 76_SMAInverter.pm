@@ -388,12 +388,6 @@ sub SMAInverter_GetStatus($)
 				# Check SpotACPower
 				$sup_SpotACPower = SMA_command($hash->{Host}, 0x51000200, 0x00464000, 0x004642FF);
 
-				# Check MaxACPower
-				$sup_MaxACPower = SMA_command($hash->{Host}, 0x51000200, 0x00411E00, 0x004120FF);
-
-				# Check MaxACPower2
-				$sup_MaxACPower2 = SMA_command($hash->{Host}, 0x51000200, 0x00832A00, 0x00832AFF);
-
 				# Check SpotACTotalPower
 				$sup_SpotACTotalPower = SMA_command($hash->{Host}, 0x51000200, 0x00263F00, 0x00263FFF);
 		
@@ -422,6 +416,13 @@ sub SMAInverter_GetStatus($)
 
 					# Check InverterTemperature
 					$sup_InverterTemperature = SMA_command($hash->{Host}, 0x52000200, 0x00237700, 0x002377FF);
+
+					# Check MaxACPower
+					$sup_MaxACPower = SMA_command($hash->{Host}, 0x51000200, 0x00411E00, 0x004120FF);
+	
+					# Check MaxACPower2
+					$sup_MaxACPower2 = SMA_command($hash->{Host}, 0x51000200, 0x00832A00, 0x00832AFF);
+
 				}
 
 				# nothing more to do, just log out
@@ -442,14 +443,6 @@ sub SMAInverter_GetStatus($)
 					readingsBulkUpdate($hash, "SPOT_PAC1", $inv_SPOT_PAC1);
 					readingsBulkUpdate($hash, "SPOT_PAC2", $inv_SPOT_PAC2);					
 					readingsBulkUpdate($hash, "SPOT_PAC3", $inv_SPOT_PAC3);					
-				}				
-				if($sup_MaxACPower eq $r_OK) {
-					readingsBulkUpdate($hash, "INV_PACMAX1", $inv_PACMAX1);
-					readingsBulkUpdate($hash, "INV_PACMAX2", $inv_PACMAX2);					
-					readingsBulkUpdate($hash, "INV_PACMAX3", $inv_PACMAX3);					
-				}				
-				if($sup_MaxACPower2 eq $r_OK) {
-					readingsBulkUpdate($hash, "INV_PACMAX1_2", $inv_PACMAX1_2);					
 				}				
 				if($sup_SpotACTotalPower eq $r_OK) {
 					readingsBulkUpdate($hash, "SPOT_PACTOT", $inv_SPOT_PACTOT);
@@ -519,6 +512,15 @@ sub SMAInverter_GetStatus($)
 							readingsBulkUpdate($hash, "INV_CLASS", $inv_CLASS);
 						}
 					}
+
+					if($sup_MaxACPower eq $r_OK) {
+						readingsBulkUpdate($hash, "INV_PACMAX1", $inv_PACMAX1);
+						readingsBulkUpdate($hash, "INV_PACMAX2", $inv_PACMAX2);					
+						readingsBulkUpdate($hash, "INV_PACMAX3", $inv_PACMAX3);					
+					}				
+					if($sup_MaxACPower2 eq $r_OK) {
+						readingsBulkUpdate($hash, "INV_PACMAX1_2", $inv_PACMAX1_2);					
+					}				
 					
 					if($sup_InverterTemperature eq $r_OK) {
 						readingsBulkUpdate($hash, "INV_TEMP", $inv_TEMP);
