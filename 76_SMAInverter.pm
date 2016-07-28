@@ -366,6 +366,9 @@ sub SMAInverter_GetStatus($)
 	$target_serial = ($attr{$name}{"target-serial"}) ? $attr{$name}{"target-serial"} : $default_target_serial;
 	$suppress_night_mode = ($attr{$name}{"suppress-night-mode"}) ? $attr{$name}{"suppress-night-mode"} : 0;
 		
+	# Get current time
+	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+	
 	# For logging events set the module name
 	$globname = $name;
 	
@@ -533,6 +536,7 @@ sub SMAInverter_GetStatus($)
 				}
 													
 				readingsEndUpdate($hash, 1);	# Notify is done by Dispatch
+				$hash->{LASTUPDATE} = sprintf "%02d.%02d.%04d / %02d:%02d:%02d" , $mday , $mon+=1 ,$year+=1900 , $hour , $min , $sec ;	
 		} else
 		{
 				# Login failed/not possible
