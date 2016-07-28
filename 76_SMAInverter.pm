@@ -209,6 +209,7 @@ sub SMAInverter_Attr(@)
 	if ($aName eq "detail-level") 
 	{
 		$detail_level = ($cmd eq "set") ? $aVal : 0;
+		delete $defs{$name}{READINGS};
 		Log3 $name, 3, "$name: Set $aName to $aVal";
 	}
 		
