@@ -34,7 +34,8 @@ use DateTime;
 
 # Global vars
 my $globname = "SMAInverter";
-
+use constant MAXBYTES => scalar 400;
+	
 # Reporting (=Reading) detail level: 
 # 0 - Standard (only power and energy), 1 - More details(including current and voltage), 2 - All Data
 my $detail_level = 0;
@@ -111,7 +112,6 @@ my $sup_DeviceStatus = $r_FAIL;			# DeviceStatus command supported
 sub SMAInverter_Initialize($)
 {
 	my ($hash) = @_;
-	my $name = $hash->{NAME};
 	my $hval;
 	my $mval;
 
@@ -123,10 +123,7 @@ sub SMAInverter_Initialize($)
 						"target-serial " .
 						$readingFnAttributes;
 	$hash->{AttrFn}   = "SMAInverter_Attr";
-	
-	$detail_level = ($attr{$name}{"detail-level"}) ? $attr{$name}{"detail-level"} : 0;
-	$target_susyid = ($attr{$name}{"target-susyid"}) ? $attr{$name}{"target-susyid"} : $default_target_susyid;
-	$target_serial = ($attr{$name}{"target-serial"}) ? $attr{$name}{"target-serial"} : $default_target_serial;
+
 }
 
 ###################################
@@ -147,14 +144,14 @@ sub SMAInverter_Define($$)
 
 	my $Pass = $a[2];		# to do: check 1-12 Chars
 
-	# extract IP or Hostname from $a[4]
-	if ( $a[3] ~~ m/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/ )
-	{
-	if ( $1 <= 255 && $2 <= 255 && $3 <= 255 && $4 <= 255 )
-		{
-			$Host = int($1).".".int($2).".".int($3).".".int($4);
-		}
-	}
+	## extract IP or Hostname from $a[4]
+	#if ( $a[3] ~~ m/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/ )
+	#{
+	#if ( $1 <= 255 && $2 <= 255 && $3 <= 255 && $4 <= 255 )
+	#	{
+	#		$Host = int($1).".".int($2).".".int($3).".".int($4);
+	#	}
+	#}
 	
 	if (!defined $Host)
 	{
@@ -249,6 +246,24 @@ sub SMAInverter_GetStatus($)
 	
 	# For logging events set the module name
 	$globname = $name;
+	
+	# In case of special target susyid or serial we have a multigate system
+	# a separate logon is required to the multigate first
+	if(($target_susyid ne $default_target_susyid) || ($target_serial ne $default_target_serial))
+	{
+		$target_susyid = $default_target_susyid;
+		$target_serial = $default_target_serial;
+		if(SMA_logon($hash->{Host}, $hash->{Pass}) ne $r_OK)
+		{
+			# Login failed/not possible
+			readingsBeginUpdate($hash);
+			readingsBulkUpdate($hash, "state", "Login to Multigate failed");
+			readingsBulkUpdate($hash, "modulstate", "login failed");
+			readingsEndUpdate($hash, 1);	# Notify is done by Dispatch	
+		}
+		$target_susyid = $attr{$name}{"target-susyid"};
+		$target_serial = $attr{$name}{"target-serial"};
+	}
 	
 		if(SMA_logon($hash->{Host}, $hash->{Pass}) eq $r_OK)
 		{
@@ -434,7 +449,19 @@ sub SMAInverter_GetStatus($)
 				readingsBulkUpdate($hash, "modulstate", "login failed");
 				readingsEndUpdate($hash, 1);	# Notify is done by Dispatch		
 		}
-	
+
+	# In case of special target susyid or serial we have a multigate system
+	# a separate logout is required to the multigate
+	if(($target_susyid ne $default_target_susyid) || ($target_serial ne $default_target_serial))
+	{
+		$target_susyid = $default_target_susyid;
+		$target_serial = $default_target_serial;
+		SMA_logout($hash->{Host});
+
+		$target_susyid = $attr{$name}{"target-susyid"};
+		$target_serial = $attr{$name}{"target-serial"};
+	}
+		
 	InternalTimer(gettimeofday()+$interval, "SMAInverter_GetStatus", $hash, 1);
 }
 
@@ -455,7 +482,6 @@ sub SMA_logon($$)
 	my $cmd_ID = "";
 	my ($socket,$data,$size);
 	
-	use constant MAXBYTES => scalar 100;
 	
 	#Encode the password
 	my $encpasswd = "888888888888888888888888"; # template for password	
@@ -634,8 +660,7 @@ sub SMA_command($$$$)
 	my $cmd_ID = "";
 	my ($socket,$data,$size,$data_ID);
 	my ($i, $temp); 			# Variables for loops and calculation
-	
-	use constant MAXBYTES => scalar 300;
+
 	
 	# Define own ID and target ID and packet ID
 	$myID = ByteOrderShort(substr(sprintf("%04X",$mysusyid),0,4)) . ByteOrderLong(sprintf("%08X",$myserialnumber));
