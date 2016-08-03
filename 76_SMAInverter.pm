@@ -824,7 +824,8 @@ sub SMA_command($$$$)
 	}
 
 	if($data_ID eq 0x4657) {
-		$inv_SPOT_FREQ = unpack("V*", substr $data, 62, 4) / 100;
+		$inv_SPOT_FREQ = unpack("V*", substr $data, 62, 4);
+		if(($inv_SPOT_FREQ eq -2147483648) || ($inv_SPOT_FREQ eq 0xFFFFFFFF)) {$inv_SPOT_FREQ = 0; } else {$inv_SPOT_FREQ = $inv_SPOT_FREQ / 100; }	# Catch 0x80000000 and 0xFFFFFFFF as 0 value
 		Log3 $globname, 5, "$globname: Found Data SPOT_FREQ=$inv_SPOT_FREQ";
 		return $r_OK;
 	}
