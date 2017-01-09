@@ -1,131 +1,70 @@
-# 76_SMAInverter.pm
-FHEM Support for SMA Inverters<br>
-<b>Description:</b><br>
-Module for the integration of a SMA Inverter over it's Speedwire (=Ethernet) Interface.<br>
+#76_SMAInverter.pm
+FHEM Support for SMA Inverters over "Speedwire" TCP/IP network
 
-Tested on Sunny Tripower 6000TL-20 and Sunny Island 4.4 with Speedwire/Webconnect Piggyback.
+##Description##
+Module for the integration of a SMA Inverter over it's Speedwire (=Ethernet) Interface.
 
-<br><br>
+Tested on Sunny Tripower 6000TL-20, 10000TL-20 and Sunny Island 4.4 with Speedwire/Webconnect Piggyback.
 
-
-
-<b>Requirements</b> 
-
-<br><br>
-
+###Requirements###
 This module requires:
 
-<ul>
+* Perl Module: IO::Socket::INET  (apt-get install libio-socket-perl)
+* Perl Module: Date::Time        (apt-get install libdatetime-perl)
+* Perl Module: Time::HiRes			(In Debian/Ubuntu/Raspbian part of default per installation)
+* FHEM Module: 99_SUNRISE_EL.pm
+* FHEM Module: Blocking.pm
 
-    <li>Perl Module: IO::Socket::INET  (apt-get install libio-socket-multicast-perl) </li>
+###Define###
 
-    <li>Perl Module: Date::Time        (apt-get install libdatetime-perl) </li>
+``define <name> SMAInverter <pin> <hostname/ip>``
 
-	<li>Perl Module: Time::HiRes</li>
-
-    <li>FHEM Module: 99_SUNRISE_EL.pm</li>
-
-	<li>FHEM Module: Blocking.pm</li>
-
-</ul>
-
-<br>
-
-<br>
+* pin: User-Password of the SMA Inverter. Default is 0000. Can be changed by "Sunny Explorer" Windows Software
+* hostname/ip: Hostname or IP-Adress of the inverter (or it's speedwire piggyback module).
+* Port of the inverter is 9522 by default. Firewall has to allow connections on this port!
 
 
+###Operation method####
+The module sends commands to the inverter and checks if they are supported by the inverter. In case of a positive answer, the data is collected and displayed in the readings according to the detail-level.
 
-
-
-<b>Define</b>
-
-<ul>
-
-<code>define &lt;name&gt; SMAInverter &lt;pin&gt; &lt;hostname/ip&gt; </code><br>
-
-<br>
-
-<li>pin: User-Password of the SMA Inverter. Default is 0000. Can be changed by "Sunny Explorer" Windows Software</li>
-
-<li>hostname/ip: Hostname or IP-Adress of the inverter (or it's speedwire piggyback module).</li>
-
-<li>Port of the inverter is 9522 by default. Firewall has to allow connection on this port !</li>
-
-</ul>
-
-
-
-
-
-<b>Operation method</b>
-
-<ul>
-
-The module sends commands to the inverter and checks if they are supported by the inverter.<br>
-
-In case of a positive answer the data is collected and displayed in the readings according to the detail-level. <br>
-
-If more than one inverter is installed, set attributes "target-susyid" and "target-serial" with an appropriate value. <br><br>
-
-
+If more than one inverter is installed, set attributes "target-susyid" and "target-serial" with an appropriate value. 
 
 The normal operation time of the inverter is supposed from sunrise to sunset. In that time period the inverter will be polled.
-
 The time of sunrise and sunset will be calculated by functions of FHEM module 99_SUNRISE_EL.pm which is loaded automatically by default. 
-
 Therefore the global attribute "longitude" and "latitude" should be set to determine the position of the solar system 
-
-(see <a href="#SUNRISE_EL">Commandref SUNRISE_EL</a>). <br><br>
-
 
 
 By the attribute "suppressSleep" the sleep mode between sunset and sunrise can be suppressed. Using attribute "offset" you may prefer the sunrise and
-
-defer the sunset virtually. So the working period of the inverter will be extended. <br><br>
-
+defer the sunset virtually. So the working period of the inverter will be extended. 
 
 
 In operating mode "automatic" the inverter will be requested periodically corresponding the preset attribute "interval". The operating mode can be 
-
-switched to "manual" to realize the retrieval manually (e.g. to synchronize the requst with a SMA energy meter by notify). <br><br>
-
+switched to "manual" to realize the retrieval manually (e.g. to synchronize the requst with a SMA energy meter by notify).
 
 
-During inverter operating time the average energy production of the last 5, 10 and 15 minutes will be calculated and displayed in the readings  
+During inverter operating time, the average energy production of the last 5, 10 and 15 minutes will be calculated and displayed in the readings  
 
-"avg_power_lastminutes_05", "avg_power_lastminutes_10" and "avg_power_lastminutes_15". <b>Note:</b> To permit a precise calculation, you should 
+``"avg_power_lastminutes_05"``
 
-also set the real request interval into the attribute "interval" although you would use the "manual" operation mode ! <br><br>
+``"avg_power_lastminutes_10" ``
 
+and 
 
+``"avg_power_lastminutes_15".```
 
-The retrieval of the inverter will be executed non-blocking. You can adjust the timeout value for this background process by attribute "timeout". <br>
+**Note:** To permit a precise calculation, you should also set the real request interval into the attribute "interval" although you would use the "manual" operation mode !
 
-</ul>
-
-
-
-<b>Get</b> 
-
-<br>
-
-<ul>
-
-<code>get &lt;name&gt; data</code>
-
-<br><br>
+The retrieval of the inverter will be executed non-blocking. You can adjust the timeout value for this background process by attribute "timeout".
 
 
+###Get###
+
+``get <name> data``
 
 The request of the inverter will be executed. Those possibility is especifically created for the "manual" operation mode (see attribute "mode").
 
 
-
-</ul>
-
-
-
-<b>Attributes</b>
+####Attributes###
 
 <ul>
 
@@ -165,7 +104,7 @@ The request of the inverter will be executed. Those possibility is especifically
 
 
 
-<b>Readings</b>
+###Readings####
 
 <ul>
 
