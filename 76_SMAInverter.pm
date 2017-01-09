@@ -15,7 +15,7 @@
 # 
 #  Description:
 #  This is an FHEM-Module for SMA Inverters.
-#  Tested on Sunny Tripower 6000TL-20 and Sunny Island 4.4
+#  Tested on Sunny Tripower 6000TL-20, 10000TL-20 and Sunny Island 4.4
 #
 #  Requirements:
 #  This module requires:
