@@ -28,6 +28,7 @@
 #################################################################################################################
 # Versions History done by DS_Starter
 #
+# 2.9.0    23.04.2017      fixed issue #22: wrong logon command for SunnyBoy systems
 # 2.8.3    19.04.2017      enhanced inverter Type-Hash
 # 2.8.2    23.03.2017      changed SMA_logon sub
 # 2.8.1    06.12.2016      SMAInverter version as internal 
@@ -78,7 +79,7 @@ use Time::HiRes qw(gettimeofday tv_interval);
 use Blocking;
 use Time::Local;
 
-my $SMAInverterVersion = "2.8.3";
+my $SMAInverterVersion = "2.9.0";
 
 # Inverter Data fields and supported commands flags.
 # $inv_susyid
@@ -1277,7 +1278,11 @@ sub SMA_logon($$$) {
  my $encpasswd = "888888888888888888888888"; # template for password	
  for my $index (0..length $pass )	     # encode password
  {
-     substr($encpasswd,($index*2),2) = substr(sprintf ("%lX", (hex(substr($encpasswd,($index*2),2)) + ord(substr($pass,$index,1)))),0,2);
+     if ( (hex(substr($encpasswd,($index*2),2)) + ord(substr($pass,$index,1))) < 256 ) {
+		substr($encpasswd,($index*2),2) = substr(sprintf ("%lX", (hex(substr($encpasswd,($index*2),2)) + ord(substr($pass,$index,1)))),0,2);
+	} else {
+		substr($encpasswd,($index*2),2) = substr(sprintf ("%lX", (hex(substr($encpasswd,($index*2),2)) + ord(substr($pass,$index,1)))),1,2);	
+	}
  }
 
  # Get current timestamp in epoch format (unix format)
