@@ -1232,7 +1232,7 @@ sub SMA_command($$$$$) {
 	 $inv_TYPE = 0; # initialize to unknown inverter type
 	 do {
 		$temp = unpack("V*", substr $data, $i, 4);
-		if(($temp & 0xFF000000) ne 0) { $inv_TYPE = $temp & 0x00FFFFFF; }				# in some models a catalogue is transmitted, right model marked with: 0x01000000 OR INV_Type
+		if(($temp & 0xFF000000) eq 0x01000000) { $inv_TYPE = $temp & 0x00FFFFFF; }				# in some models a catalogue is transmitted, right model marked with: 0x01000000 OR INV_Type
 		$i = $i+4;
 	 } while ((unpack("V*", substr $data, $i, 4) ne 0x00FFFFFE) && ($i<$size));			# 0x00FFFFFE is the end marker for attributes
 
